@@ -48,7 +48,7 @@
 
 /*
  * NOTICE: This file has been modified from Sun's original 2006 release.
- * Added a __linux__ byte-swap branch (hton*/ntoh* via <byteswap.h>) and
+ * Added a __linux__ byte-swap branch (hton and ntoh macros via <byteswap.h>) and
  * fixed a missing hton64() call in the PE_int case, both required for
  * correct output on a little-endian host. See README.md for details.
  */
