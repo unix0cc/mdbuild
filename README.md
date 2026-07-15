@@ -1,4 +1,4 @@
-# mdbuild — mdgen / mdlint (sun4v Machine Description tools)
+# mdgen / mdlint (sun4v Machine Description tools) generator
 
 
 `mdgen` compiles a human-authored `.pdesc`/`.hdesc` Machine Description source file
