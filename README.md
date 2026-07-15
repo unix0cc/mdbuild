@@ -1,8 +1,11 @@
 # mdbuild — mdgen / mdlint (sun4v Machine Description tools)
 
+
 `mdgen` compiles a human-authored `.pdesc`/`.hdesc` Machine Description source file
 (after `cpp` preprocessing) into the binary MDESC blob a sun4v guest/hypervisor
-consumes. `mdlint` reads/validates/dumps an already-built binary MD.
+consumes. 
+
+`mdlint` reads/validates/dumps an already-built binary MD.
 
 ## Provenance
 
