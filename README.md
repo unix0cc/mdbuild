@@ -10,8 +10,8 @@ consumes.
 ## Provenance
 
 Real 2006 Sun Microsystems C source, part of the OpenSPARC T1 hypervisor release
-(`hypervisor/src/md/{mdgen,mdlint}`). Unmodified except for two latent
-little-endian portability bugs, fixed here (both invisible on Sun's original
+(`hypervisor/src/md/{mdgen,mdlint}`). Unmodified except for latent
+little-endian portability bugs, fixed here (all invisible on Sun's original
 big-endian SPARC build hosts, where host byte order and MD wire byte order
 happen to coincide, masking missing/incomplete byte-swap logic):
 
@@ -20,9 +20,26 @@ happen to coincide, masking missing/incomplete byte-swap logic):
   `PE_int` (scalar property value) case wrote `prop_val` without calling
   `hton64()` at all, even after the macro was added — a real omission, not
   just a missing platform branch.
+- `mdlint/basics.h`: same missing `hton*/ntoh*` definitions as
+  `mdgen/output_bin.c` (a separate copy of the identical macro block, one per
+  tool).
 - `mdlint/mdlint.c`: compared the raw MD header `transport_version` field
   directly instead of byte-swapping it first, so every binary was rejected as
   `"Unrecognised transport version"` on a little-endian host.
+
+**Endianness fix, corrected (2026-07-22):** the `hton*/ntoh*` macros in both
+`output_bin.c` and `basics.h` originally branched on `#elif defined(__linux__)`
+to decide whether to byte-swap — conflating "which OS" with "which byte
+order." That's wrong on a genuine *big-endian* Linux host (PowerPC BE,
+s390x, etc.): such a host's in-memory values are already correctly ordered,
+same as the `_BIG_ENDIAN` case, but the old branch swapped them anyway
+since it only checked the OS name, silently corrupting output. Both files
+now check the compiler's actual `__BYTE_ORDER__`/`__ORDER_BIG_ENDIAN__`/
+`__ORDER_LITTLE_ENDIAN__` (real GCC/Clang builtins, independent of OS)
+instead. Verified byte-identical output unchanged on x86_64 Linux (the only
+host this project actually builds on) after the fix — this only changes
+behavior on a big-endian Linux host, which nobody had actually built on
+before.
 
 ## License
 
@@ -42,11 +59,14 @@ The top-level `LICENSE` file is the closest standard template match, BSD
 clause, which is preserved verbatim in every individual file's own header —
 those per-file headers are the authoritative full text.
 
-**Modified files:** two files differ from Sun's original release —
-`mdgen/output_bin.c` and `mdlint/mdlint.c`, each fixing a latent
-little-endian portability bug (see below). Both carry an explicit `NOTICE:`
-comment immediately after their original Sun header stating what changed.
-All other files are unmodified from the original release.
+**Modified files:** three files differ from Sun's original release —
+`mdgen/output_bin.c`, `mdlint/basics.h`, and `mdlint/mdlint.c`, each fixing a
+latent little-endian portability bug (see above). `output_bin.c` and
+`mdlint.c` carry an explicit `NOTICE:` comment immediately after their
+original Sun header stating what changed; `basics.h` carries the same
+`hton*/ntoh*` fix as `output_bin.c` but predates that convention and has no
+separate NOTICE comment yet. All other files are unmodified from the
+original release.
 
 ## Build (GNU make)
 
