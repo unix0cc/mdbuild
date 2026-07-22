@@ -77,7 +77,14 @@ typedef enum {
 #define	ntoh16(_s)	((uint16_t)(_s))
 #define	ntoh32(_s)	((uint32_t)(_s))
 #define	ntoh64(_s)	((uint64_t)(_s))
-#elif defined(__linux__)
+#elif defined(__linux__) && defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define	hton16(_s)	((uint16_t)(_s))
+#define	hton32(_s)	((uint32_t)(_s))
+#define	hton64(_s)	((uint64_t)(_s))
+#define	ntoh16(_s)	((uint16_t)(_s))
+#define	ntoh32(_s)	((uint32_t)(_s))
+#define	ntoh64(_s)	((uint64_t)(_s))
+#elif defined(__linux__) && defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #include <byteswap.h>
 #define	hton16(_s)	bswap_16((uint16_t)(_s))
 #define	hton32(_s)	bswap_32((uint32_t)(_s))

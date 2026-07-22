@@ -48,9 +48,15 @@
 
 /*
  * NOTICE: This file has been modified from Sun's original 2006 release.
- * Added a __linux__ byte-swap branch (hton and ntoh macros via <byteswap.h>) and
+ * Added a byte-swap branch (hton and ntoh macros via <byteswap.h>) and
  * fixed a missing hton64() call in the PE_int case, both required for
  * correct output on a little-endian host. See README.md for details.
+ *
+ * The byte-swap branch checks the compiler's actual __BYTE_ORDER__
+ * rather than just __linux__: a big-endian Linux host (PowerPC BE,
+ * s390x, etc.) needs the same no-op treatment as _BIG_ENDIAN, not a
+ * swap -- swapping unconditionally on any Linux build silently
+ * corrupted output on such hosts.
  */
 
 #pragma ident	"@(#)output_bin.c	1.1	05/03/31 SMI"
@@ -90,7 +96,14 @@
 #define	ntoh16(_s)	((uint16_t)(_s))
 #define	ntoh32(_s)	((uint32_t)(_s))
 #define	ntoh64(_s)	((uint64_t)(_s))
-#elif defined(__linux__)
+#elif defined(__linux__) && defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define	hton16(_s)	((uint16_t)(_s))
+#define	hton32(_s)	((uint32_t)(_s))
+#define	hton64(_s)	((uint64_t)(_s))
+#define	ntoh16(_s)	((uint16_t)(_s))
+#define	ntoh32(_s)	((uint32_t)(_s))
+#define	ntoh64(_s)	((uint64_t)(_s))
+#elif defined(__linux__) && defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #include <byteswap.h>
 #define	hton16(_s)	bswap_16((uint16_t)(_s))
 #define	hton32(_s)	bswap_32((uint32_t)(_s))
