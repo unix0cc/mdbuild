@@ -50,7 +50,7 @@
  * NOTICE: This file has been modified from Sun's original 2006 release.
  * Added a byte-swap branch (hton and ntoh macros via <byteswap.h>) and
  * fixed a missing hton64() call in the PE_int case, both required for
- * correct output on a little-endian host. See README.md for details.
+ * correct output on a little-endian host. See README for details.
  *
  * The byte-swap branch checks the compiler's actual __BYTE_ORDER__
  * rather than just __linux__: a big-endian Linux host (PowerPC BE,

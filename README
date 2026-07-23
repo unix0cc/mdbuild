@@ -16,7 +16,7 @@ for a small set of portability fixes, warning cleanups and dead-code removals,
 none of which change output: the rebuilt `mdgen` reproduces Sun's 2006 binaries
 byte for byte.
 
-**Every source change is recorded in [`CHANGELOG.md`](CHANGELOG.md)**, and each
+**Every source change is recorded in [`CHANGELOG`](CHANGELOG)**, and each
 touched file carries a `NOTICE:` comment stating what changed, immediately after
 its original Sun header. The exception is `mdlint/basics.h`, which predates that
 convention and carries only the little-endian `hton*/ntoh*` fix.
@@ -53,7 +53,7 @@ clause, which is preserved verbatim in every individual file's own header —
 those per-file headers are the authoritative full text.
 
 (The list of files that differ from Sun's original, and why, is in Provenance
-above; the full per-change history is in [`CHANGELOG.md`](CHANGELOG.md).)
+above; the full per-change history is in [`CHANGELOG`](CHANGELOG).)
 
 ## Build (GNU make)
 

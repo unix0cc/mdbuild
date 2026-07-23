@@ -51,7 +51,7 @@
  * Added #include <string.h>. Sun's sources include only <strings.h>, the
  * BSD/POSIX header (bcopy, strcasecmp, index); on Solaris that also made the
  * ISO C string functions visible, but under glibc it does not, leaving
- * strlen() and memmove() implicitly declared. See README.md for details.
+ * strlen() and memmove() implicitly declared. See README for details.
  *
  * Also removed two dead locals: "uint64_t d" in do_assignment(), never
  * used at all, and "pair_entry_t pp" in parse_dag(), initialised and then

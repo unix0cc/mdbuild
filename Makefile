@@ -4,7 +4,7 @@
 # (Makefile.master + per-tool Makefile using $(TOP), $(COMMON_INC), Sun cc
 # -erroff flags) to a plain, portable GNU make + gcc build. Source is
 # otherwise unmodified except for two latent little-endian bugs fixed in
-# output_bin.c and mdlint.c (see README.md) -- both invisible on Sun's
+# output_bin.c and mdlint.c (see README) -- both invisible on Sun's
 # native big-endian SPARC build hosts, where host and network byte order
 # happen to coincide.
 

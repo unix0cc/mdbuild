@@ -51,7 +51,7 @@
  * Removed two dead locals from output_text(): "int fh", never used at all,
  * and "int list_end_offset", assigned once after the node-offset loop and
  * never read. Neither had a reader, so removing them changes nothing.
- * See README.md for details.
+ * See README for details.
  */
 
 #pragma ident	"@(#)output_text.c	1.1	05/03/31 SMI"

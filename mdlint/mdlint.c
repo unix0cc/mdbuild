@@ -50,7 +50,7 @@
  * NOTICE: This file has been modified from Sun's original 2006 release.
  * Added a missing ntoh32() call on the transport_version header field
  * before comparison, required for correct validation on a little-endian
- * host. See README.md for details.
+ * host. See README for details.
  *
  * Separately, the text output used %llx/%lld to print uint64_t values.
  * That is only correct where uint64_t is unsigned long long; on an LP64

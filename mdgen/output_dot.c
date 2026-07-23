@@ -51,7 +51,7 @@
  * Added #include <string.h>. Sun's sources include only <strings.h>, the
  * BSD/POSIX header (bcopy, strcasecmp, index); on Solaris that also made the
  * ISO C string functions visible, but under glibc it does not, leaving
- * strcmp() implicitly declared. See README.md for details.
+ * strcmp() implicitly declared. See README for details.
  *
  * Also: printed a uint64_t with %llx (correct only where uint64_t is
  * unsigned long long; on an LP64 host it is unsigned long) -- now PRIx64
