@@ -46,6 +46,14 @@
  * Use is subject to license terms.
  */
 
+/*
+ * NOTICE: This file has been modified from Sun's original 2006 release.
+ * Removed two dead locals from output_text(): "int fh", never used at all,
+ * and "int list_end_offset", assigned once after the node-offset loop and
+ * never read. Neither had a reader, so removing them changes nothing.
+ * See README.md for details.
+ */
+
 #pragma ident	"@(#)output_text.c	1.1	05/03/31 SMI"
 
 
@@ -116,9 +124,7 @@ void
 output_text(FILE *fp)
 {
 	dag_node_t *dnp;
-	int fh;
 	int offset;
-	int list_end_offset;
 
 	fflush(fp);
 
@@ -137,7 +143,6 @@ DBGN(	fprintf(stderr, "Node %d @ %d : %s %s\tprop=%d\n",
 		offset += BASE_TAG_COUNT;
 		offset += dnp->properties.num;
 	}
-	list_end_offset = offset;
 
 	dump_dag_nodes(fp);
 }

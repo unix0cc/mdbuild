@@ -66,9 +66,29 @@ date):
   oversight. Both now handle it explicitly, with a comment on why nothing is
   drawn for it.
 
-After all of the above, a clean build goes from 105 warnings to 11, and what
-is left is cosmetic: unused variables in Sun's code, plus `input`/`yyunput`
-from flex-generated `mdlex.c`.
+Finally, the dead code the warnings were pointing at (same date), after which
+a clean build is **completely silent**:
+
+- `mdlint/mdlint.c`: `brief_sanity()` byte-swapped `nextidx`, `val`, `offset`
+  and `len` out of every element and then never read any of them, and declared
+  an `i` it never even assigned — the residue of a deeper check that was never
+  written. Removed. (`output_text()` has identically named locals that it does
+  use; those are untouched.) The checks `brief_sanity` really performs — node
+  nesting and name-length agreement — are unchanged, and its output on a valid
+  MD is byte-identical before and after.
+- `mdgen/mdparse.c`: `uint64_t d` in `do_assignment()`, never used; and
+  `pair_entry_t pp` in `parse_dag()`, initialised then abandoned.
+- `mdgen/output_text.c`: `int fh`, never used; and `int list_end_offset`,
+  assigned once after the node-offset loop and never read.
+- `mdgen/mdlex.l`: added `%option noinput nounput`. `mdgen` calls neither
+  `input()` nor `yyunput()`, so flex was emitting both purely to sit unused.
+  Suppressing generation beats silencing the warning — the dead functions
+  leave the binary. `mdlex.c` itself is generated, not stored, so the fix has
+  to live in the `.l`.
+
+None of these had a reader, so removing them is behaviour-neutral; `mdgen`
+still reproduces Sun's 2006 binaries byte for byte and all eleven downstream
+configs rebuild unchanged.
 
 **Endianness fix, corrected (2026-07-22):** the `hton*/ntoh*` macros in both
 `output_bin.c` and `basics.h` originally branched on `#elif defined(__linux__)`
@@ -102,10 +122,12 @@ The top-level `LICENSE` file is the closest standard template match, BSD
 clause, which is preserved verbatim in every individual file's own header —
 those per-file headers are the authoritative full text.
 
-**Modified files:** six files differ from Sun's original release.
+**Modified files:** eight files differ from Sun's original release.
 
 Little-endian fixes: `mdgen/output_bin.c`, `mdlint/basics.h`, `mdlint/mdlint.c`.
 Format, init and switch-coverage fixes: `mdgen/mdmain.c`, `mdgen/output_dot.c`,
+`mdlint/mdlint.c`.
+Dead-code removal: `mdgen/mdparse.c`, `mdgen/output_text.c`, `mdgen/mdlex.l`,
 `mdlint/mdlint.c`.
 Missing `<string.h>`: `mdgen/mdmain.c`, `mdgen/mdparse.c`, `mdgen/output_dot.c`
 — and `mdgen/output_bin.c` again, which carries both.

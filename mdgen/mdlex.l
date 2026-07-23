@@ -84,6 +84,15 @@ void fatal(char *s,...);
 	} while(0)
 %}
 
+/*
+ * NOTICE: added relative to Sun's original 2006 release. mdgen never calls
+ * yyunput() or input(), so flex generated both only for them to sit unused,
+ * which -Wall reports. Suppressing the generation is preferable to silencing
+ * the warning: the dead functions leave the binary entirely. Behaviour is
+ * unchanged -- these options only stop flex emitting code nothing calls.
+ */
+%option noinput nounput
+
 DECNUM	("0"|([1-9][0-9]*))
 
 %x comment

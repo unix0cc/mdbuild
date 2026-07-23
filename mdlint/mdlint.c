@@ -57,6 +57,13 @@
  * host it is unsigned long, so the format and the argument disagree.
  * Now uses PRIx64/PRId64 from <inttypes.h>. Output is unchanged on this
  * platform -- both spellings render the same digits.
+ *
+ * Also removed five dead locals from brief_sanity(): nextidx, val, offset
+ * and len were byte-swapped out of each element and then never read, and i
+ * was never even assigned -- the residue of a deeper check that was never
+ * written. (output_text() has identically named locals which it does use;
+ * those are untouched.) The checks brief_sanity actually performs -- node
+ * nesting and name-length agreement -- are unchanged.
  */
 
 #pragma ident	"@(#)mdlint.c	1.1	05/03/31 SMI"
@@ -310,11 +317,6 @@ brief_sanity(md_t *mdp, FILE *fp)
 	for (idx = 0; !done; idx++) {
 		md_element_t *np;
 		uint32_t stro;
-		uint64_t nextidx;
-		uint64_t val;
-		uint32_t offset;
-		uint32_t len;
-		int i;
 		bool_t check_name = false;
 
 		np = &(mdp->mdep[idx]);
@@ -327,7 +329,6 @@ brief_sanity(md_t *mdp, FILE *fp)
 			break;
 
 		case DT_NODE:
-			nextidx = ntoh64(np->d.prop_idx);
 			stro = ntoh32(np->name);
 
 			if (in_node) fatal("Node element @ 0x%x (%s) "
@@ -348,27 +349,21 @@ brief_sanity(md_t *mdp, FILE *fp)
 			break;
 
 		case DT_PROP_ARC:
-			nextidx = ntoh64(np->d.prop_idx);
 			stro = ntoh32(np->name);
 			check_name = true;
 			break;
 
 		case DT_PROP_VAL:
-			val = ntoh64(np->d.prop_val);
 			stro = ntoh32(np->name);
 			check_name = true;
 			break;
 
 		case DT_PROP_STR:
-			offset = ntoh32(np->d.prop_data.offset);
-			len = ntoh32(np->d.prop_data.len);
 			stro = ntoh32(np->name);
 			check_name = true;
 			break;
 
 		case DT_PROP_DAT:
-			offset = ntoh32(np->d.prop_data.offset);
-			len = ntoh32(np->d.prop_data.len);
 			stro = ntoh32(np->name);
 			check_name = true;
 

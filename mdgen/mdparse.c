@@ -52,6 +52,10 @@
  * BSD/POSIX header (bcopy, strcasecmp, index); on Solaris that also made the
  * ISO C string functions visible, but under glibc it does not, leaving
  * strlen() and memmove() implicitly declared. See README.md for details.
+ *
+ * Also removed two dead locals: "uint64_t d" in do_assignment(), never
+ * used at all, and "pair_entry_t pp" in parse_dag(), initialised and then
+ * abandoned. Neither had a reader, so removing them changes nothing.
  */
 
 #pragma ident	"@(#)mdparse.c	1.5	05/12/17 SMI"
@@ -453,7 +457,6 @@ do_assignment(pair_entry_t *pep, int fn)
 	uint8_t *dest;
 	char *src;
 	int len;
-	uint64_t d;
 
 	pp.namep = pep->namep;
 	pp.utype = PE_none;
@@ -609,10 +612,7 @@ parse_dag(char *fnamep, FILE *fp)
 		lex_get(T_L_Brace);
 
 		while ((tok = lex_get_token()) != T_R_Brace) {
-			pair_entry_t pp, *pep;
-
-			pp.utype = PE_none;
-			pp.u.data.len = 0;
+			pair_entry_t *pep;
 
 			switch (tok) {
 #if ALLOW_SETPROP /* FIXME: broken for the moment { */
