@@ -6,8 +6,8 @@ consumes.
 
 `mdlint` reads/validates/dumps an already-built binary MD.
 
-The Machine Description format is specified in Sun case
-[FWARC/2005/115](https://sun4v.github.io/ARChive/FWARC/2005/115/final.materials/index.html).
+The Machine Description format is specified in Sun case FWARC/2005/115:
+https://sun4v.github.io/ARChive/FWARC/2005/115/final.materials/index.html
 
 ## Build (GNU make)
 
@@ -77,8 +77,9 @@ See `bin/mdgen --help` / `bin/mdlint --help` for full option lists
 
 Real 2006 Sun Microsystems C source, part of the OpenSPARC T1 hypervisor release
 (`hypervisor/src/md/{mdgen,mdlint}`), ported from Sun's Solaris/Sun-Studio build
-to a portable GNU make + gcc build. The original release is Oracle's
-[OpenSPARC T1 hypervisor archive](http://download.oracle.com/technetwork/systems/opensparc/OpenSPARCT1_Arch.1.5.tar.bz2).
+to a portable GNU make + gcc build. The original release is Oracle's OpenSPARC T1
+hypervisor archive:
+http://download.oracle.com/technetwork/systems/opensparc/OpenSPARCT1_Arch.1.5.tar.bz2
 The C source is otherwise unmodified except for a small set of portability fixes,
 warning cleanups and dead-code removals, none of which change output: the rebuilt
 `mdgen` reproduces Sun's 2006 binaries byte for byte.
