@@ -1,44 +1,13 @@
 # mdgen / mdlint (sun4v Machine Description tools) generator
 
-
 `mdgen` compiles a human-authored `.pdesc`/`.hdesc` Machine Description (MD) source file
 (after `cpp` preprocessing) into the binary MDESC blob a sun4v guest/hypervisor
-consumes. 
+consumes.
 
 `mdlint` reads/validates/dumps an already-built binary MD.
 
-The format of Machine Description is a part of FWARC/2005/115 case, available [here](https://sun4v.github.io/ARChive/FWARC/2005/115/final.materials/index.html)
-
-
-
-## Provenance
-
-Real 2006 Sun Microsystems C source, part of the OpenSPARC T1 hypervisor release
-(`hypervisor/src/md/{mdgen,mdlint}`), ported from Sun's Solaris/Sun-Studio build
-to a portable GNU make + gcc build. The C source is otherwise unmodified except
-for a small set of portability fixes, warning cleanups and dead-code removals,
-none of which change output: the rebuilt `mdgen` reproduces Sun's 2006 binaries
-byte for byte.
-
-Original OpenSPARC T1 hypervisor archive available [here](http://download.oracle.com/technetwork/systems/opensparc/OpenSPARCT1_Arch.1.5.tar.bz2)
-
-**Every source change is recorded in [`CHANGELOG`](CHANGELOG)**, and each
-touched file carries a `NOTICE:` comment stating what changed, immediately after
-its original Sun header. The exception is `mdlint/basics.h`, which predates that
-convention and carries only the little-endian `hton*/ntoh*` fix.
-
-Current divergence from Sun's original — eight of the 26 files:
-
-| Kind | Files |
-|------|-------|
-| Little-endian byte-swap | `mdgen/output_bin.c`, `mdlint/basics.h`, `mdlint/mdlint.c` |
-| Missing `<string.h>` | `mdgen/mdmain.c`, `mdgen/mdparse.c`, `mdgen/output_dot.c`, `mdgen/output_bin.c` |
-| Format / init / switch | `mdgen/mdmain.c`, `mdgen/output_dot.c`, `mdlint/mdlint.c` |
-| Dead-code removal | `mdgen/mdparse.c`, `mdgen/output_text.c`, `mdgen/mdlex.l`, `mdlint/mdlint.c` |
-
-Sun's SCCS `#pragma ident` stamps are **kept** (they record each file's version
-and date at Sun); gcc does not implement that pragma, so the Makefile passes
-`-Wno-unknown-pragmas` rather than removing the stamps.
+The Machine Description format is specified in Sun case
+[FWARC/2005/115](https://sun4v.github.io/ARChive/FWARC/2005/115/final.materials/index.html).
 
 ## Build (GNU make)
 
@@ -103,6 +72,34 @@ bin/mdlint -t output-md.bin       # dump/validate a built MD as text
 
 See `bin/mdgen --help` / `bin/mdlint --help` for full option lists
 (`--text`, `--dot <arc>` graph output, etc.).
+
+## Provenance
+
+Real 2006 Sun Microsystems C source, part of the OpenSPARC T1 hypervisor release
+(`hypervisor/src/md/{mdgen,mdlint}`), ported from Sun's Solaris/Sun-Studio build
+to a portable GNU make + gcc build. The original release is Oracle's
+[OpenSPARC T1 hypervisor archive](http://download.oracle.com/technetwork/systems/opensparc/OpenSPARCT1_Arch.1.5.tar.bz2).
+The C source is otherwise unmodified except for a small set of portability fixes,
+warning cleanups and dead-code removals, none of which change output: the rebuilt
+`mdgen` reproduces Sun's 2006 binaries byte for byte.
+
+**Every source change is recorded in [`CHANGELOG`](CHANGELOG)**, and each
+touched file carries a `NOTICE:` comment stating what changed, immediately after
+its original Sun header. The exception is `mdlint/basics.h`, which predates that
+convention and carries only the little-endian `hton*/ntoh*` fix.
+
+Current divergence from Sun's original — eight of the 26 files:
+
+| Kind | Files |
+|------|-------|
+| Little-endian byte-swap | `mdgen/output_bin.c`, `mdlint/basics.h`, `mdlint/mdlint.c` |
+| Missing `<string.h>` | `mdgen/mdmain.c`, `mdgen/mdparse.c`, `mdgen/output_dot.c`, `mdgen/output_bin.c` |
+| Format / init / switch | `mdgen/mdmain.c`, `mdgen/output_dot.c`, `mdlint/mdlint.c` |
+| Dead-code removal | `mdgen/mdparse.c`, `mdgen/output_text.c`, `mdgen/mdlex.l`, `mdlint/mdlint.c` |
+
+Sun's SCCS `#pragma ident` stamps are **kept** (they record each file's version
+and date at Sun); gcc does not implement that pragma, so the Makefile passes
+`-Wno-unknown-pragmas` rather than removing the stamps.
 
 ## Context
 
