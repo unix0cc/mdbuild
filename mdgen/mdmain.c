@@ -52,6 +52,18 @@
  * BSD/POSIX header (bcopy, strcasecmp, index); on Solaris that also made the
  * ISO C string functions visible, but under glibc it does not, leaving
  * strcmp() implicitly declared. See README.md for details.
+ *
+ * Two further fixes, both in the same spirit -- latent on Sun's platform,
+ * live elsewhere:
+ *
+ *   - outfnp was declared without an initialiser and read unconditionally
+ *     at the "if (outfnp != NULL)" below. It is assigned only by -o /
+ *     --outfile, so the documented default of writing to stdout read an
+ *     indeterminate pointer, and would have called fopen() on it had the
+ *     stack slot held anything but zero. Now initialised to NULL.
+ *   - the text dump printed a uint64_t with %llx, correct only where
+ *     uint64_t is unsigned long long; on an LP64 host it is unsigned long.
+ *     Now uses PRIx64 from <inttypes.h>, which renders identically here.
  */
 
 #pragma ident	"@(#)mdmain.c	1.1	05/03/31 SMI"
@@ -64,6 +76,7 @@
 #include <ctype.h>
 #include <strings.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include <md/md_impl.h>
 
@@ -108,7 +121,7 @@ main(int argc, char **argv)
 	int i;
 	char *fnamep;
 	FILE *fp;
-	char *outfnp;	/* output filename */
+	char *outfnp = NULL;	/* output filename; NULL => stdout */
 
 	output_type = Out_binary;
 
@@ -383,8 +396,8 @@ dump_dag_nodes(FILE *fp)
 				    pep->u.strp);
 				break;
 			case PE_int:
-				fprintf(fp, "\t%s = 0x%llx;\n", pep->namep,
-				    pep->u.val);
+				fprintf(fp, "\t%s = 0x%" PRIx64 ";\n",
+				    pep->namep, pep->u.val);
 				break;
 			case PE_arc:
 				fprintf(fp, "\t%s -> %s;\n", pep->namep,

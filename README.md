@@ -45,6 +45,31 @@ header-visibility difference rather than an endianness one:
   `mdgen` still reproduces Sun's 2006 binaries byte for byte, and all eleven
   configs in `github.com/unix0cc/md` rebuild unchanged.
 
+Three more, found once the `#pragma ident` noise stopped hiding them (same
+date):
+
+- `mdgen/mdmain.c`: `outfnp` was declared without an initialiser and read
+  unconditionally at `if (outfnp != NULL)`. It is assigned only by `-o` /
+  `--outfile`, so the *documented* default — `-o | --outfile : output file
+  (default=stdout)` — read an indeterminate pointer, and would have passed it
+  to `fopen()` had the stack slot held anything but zero. A real bug that this
+  project never tripped over only because its Makefiles always pass
+  `--outfile`. Now initialised to `NULL`.
+- `mdgen/{mdmain,output_dot}.c`, `mdlint/mdlint.c`: printed `uint64_t` values
+  with `%llx`/`%lld`. That is correct only where `uint64_t` is `unsigned long
+  long`; on an LP64 host it is `unsigned long`, so format and argument
+  disagree. Now `PRIx64`/`PRId64` from `<inttypes.h>`. Output is unchanged on
+  this platform — both spellings render the same digits — which the byte-for-
+  byte rebuild below confirms.
+- `mdgen/output_dot.c`: both property switches omitted `PE_data`, so a data
+  property was silently skipped and nothing distinguished that from an
+  oversight. Both now handle it explicitly, with a comment on why nothing is
+  drawn for it.
+
+After all of the above, a clean build goes from 105 warnings to 11, and what
+is left is cosmetic: unused variables in Sun's code, plus `input`/`yyunput`
+from flex-generated `mdlex.c`.
+
 **Endianness fix, corrected (2026-07-22):** the `hton*/ntoh*` macros in both
 `output_bin.c` and `basics.h` originally branched on `#elif defined(__linux__)`
 to decide whether to byte-swap — conflating "which OS" with "which byte
@@ -80,6 +105,8 @@ those per-file headers are the authoritative full text.
 **Modified files:** six files differ from Sun's original release.
 
 Little-endian fixes: `mdgen/output_bin.c`, `mdlint/basics.h`, `mdlint/mdlint.c`.
+Format, init and switch-coverage fixes: `mdgen/mdmain.c`, `mdgen/output_dot.c`,
+`mdlint/mdlint.c`.
 Missing `<string.h>`: `mdgen/mdmain.c`, `mdgen/mdparse.c`, `mdgen/output_dot.c`
 — and `mdgen/output_bin.c` again, which carries both.
 

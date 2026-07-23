@@ -52,6 +52,13 @@
  * BSD/POSIX header (bcopy, strcasecmp, index); on Solaris that also made the
  * ISO C string functions visible, but under glibc it does not, leaving
  * strcmp() implicitly declared. See README.md for details.
+ *
+ * Also: printed a uint64_t with %llx (correct only where uint64_t is
+ * unsigned long long; on an LP64 host it is unsigned long) -- now PRIx64
+ * from <inttypes.h>, which renders identically here. And both property
+ * switches omitted PE_data entirely, so a data property was skipped with
+ * no indication and the compiler could not tell that from an oversight;
+ * both now list it explicitly, with a comment on why nothing is drawn.
  */
 
 #pragma ident	"@(#)output_dot.c	1.1	05/03/31 SMI"
@@ -62,6 +69,7 @@
 #include <sys/types.h>
 #include <strings.h>
 #include <string.h>
+#include <inttypes.h>
 #include <ctype.h>
 
 #include <assert.h>
@@ -151,10 +159,19 @@ output_dot(FILE *fp)
 					    sanity_name(pep->u.strp));
 					break;
 				case PE_int:
-					fprintf(fp, "%s = 0x%llx\\n",
+					fprintf(fp, "%s = 0x%" PRIx64 "\\n",
 					    pep->namep, pep->u.val);
 					break;
 				case PE_arc:
+					break;
+				case PE_data:
+					/*
+					 * Opaque byte blobs; deliberately not
+					 * rendered inside a dot node label.
+					 * Listed explicitly so the compiler
+					 * can still check this switch covers
+					 * every property type.
+					 */
 					break;
 				case PE_noderef:
 					fatal("Internal error noderefs should \
@@ -175,6 +192,9 @@ all be resolved");
 			case PE_string:
 				break;
 			case PE_int:
+				break;
+			case PE_data:
+				/* Only arcs draw edges; nothing to do. */
 				break;
 			case PE_arc:
 				if (strcmp(output_dot_dagp, pep->namep) == 0) {

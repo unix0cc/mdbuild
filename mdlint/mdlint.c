@@ -51,6 +51,12 @@
  * Added a missing ntoh32() call on the transport_version header field
  * before comparison, required for correct validation on a little-endian
  * host. See README.md for details.
+ *
+ * Separately, the text output used %llx/%lld to print uint64_t values.
+ * That is only correct where uint64_t is unsigned long long; on an LP64
+ * host it is unsigned long, so the format and the argument disagree.
+ * Now uses PRIx64/PRId64 from <inttypes.h>. Output is unchanged on this
+ * platform -- both spellings render the same digits.
  */
 
 #pragma ident	"@(#)mdlint.c	1.1	05/03/31 SMI"
@@ -228,7 +234,7 @@ output_text(md_t *mdp, FILE *fp)
 			stro = ntoh32(np->name);
 
 			fprintf(fp, "node %s node_0x%x {\t\t\t/* next "
-				"@ 0x%llx */\n",
+				"@ 0x%" PRIx64 " */\n",
 				mdp->namep + stro,
 				idx,
 				nextidx);
@@ -243,7 +249,7 @@ output_text(md_t *mdp, FILE *fp)
 			nextidx = ntoh64(np->d.prop_idx);
 			stro = ntoh32(np->name);
 
-			fprintf(fp, "\t%s -> node_0x%llx;\n",
+			fprintf(fp, "\t%s -> node_0x%" PRIx64 ";\n",
 				mdp->namep + stro, nextidx);
 			break;
 
@@ -251,8 +257,8 @@ output_text(md_t *mdp, FILE *fp)
 			val = ntoh64(np->d.prop_val);
 			stro = ntoh32(np->name);
 
-			fprintf(fp, "\t%s = 0x%llx;\t\t/* %lld */\n",
-				mdp->namep + stro, val, val);
+			fprintf(fp, "\t%s = 0x%" PRIx64 ";\t\t/* %" PRId64
+				" */\n", mdp->namep + stro, val, val);
 			break;
 
 		case DT_PROP_STR:
