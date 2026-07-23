@@ -22,7 +22,22 @@ CFLAGS  += -Wno-unknown-pragmas
 
 INCLUDE := -Iinclude
 
+# Where `make` puts the built tools. Not the install destination -- see PREFIX.
 BINDIR  := bin
+
+# Install destination: $(DESTDIR)$(PREFIX)/bin.
+#
+# PREFIX defaults to $(HOME)/mdbuild rather than the usual /usr/local because
+# that is the path this tool's one known consumer looks in: every config
+# Makefile in github.com/unix0cc/md hardcodes
+# `MDGEN ?= $(HOME)/mdbuild/bin/mdgen`. A bare `make install` therefore does
+# the useful thing here and needs no root. Override for a system install:
+#
+#     make install PREFIX=/usr/local        # -> /usr/local/bin
+#     make install DESTDIR=/tmp/stage       # staged, for packaging
+PREFIX  ?= $(HOME)/mdbuild
+DESTDIR ?=
+INSTALL ?= install
 
 MDGEN_SRC := \
 	mdgen/mdmain.c mdgen/mdparse.c mdgen/mdlex.c \
@@ -35,7 +50,7 @@ MDLINT_SRC := \
 	mdlint/fatal.c mdlint/vfatal.c
 MDLINT_OBJ := $(MDLINT_SRC:.c=.o)
 
-.PHONY: all clean distclean
+.PHONY: all install install-links uninstall clean distclean
 
 all: $(BINDIR)/mdgen $(BINDIR)/mdlint
 
@@ -56,6 +71,29 @@ mdgen/mdlex.c: mdgen/mdlex.l
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
+
+# Copy the built tools into $(DESTDIR)$(PREFIX)/bin. Ordinary install
+# semantics: the destination gets its own copies, independent of this
+# checkout, which is what you want when installing somewhere permanent.
+install: all
+	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
+	$(INSTALL) -m 755 $(BINDIR)/mdgen $(BINDIR)/mdlint $(DESTDIR)$(PREFIX)/bin
+
+# Symlink instead of copying. For a machine that builds from this checkout
+# and wants the installed tools to track it: a copy silently goes stale as
+# soon as the repo moves on -- which happened here, the installed mdgen sat
+# four commits behind before anyone noticed, because nothing about a stale
+# copy looks wrong. Symlinks make that drift impossible rather than merely
+# detectable. The trade is that `make distclean` here breaks the links, but
+# it breaks them loudly instead of leaving an old binary quietly in place.
+# Not for packaging or for installing outside a developer box.
+install-links: all
+	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
+	ln -sfn $(CURDIR)/$(BINDIR)/mdgen $(DESTDIR)$(PREFIX)/bin/mdgen
+	ln -sfn $(CURDIR)/$(BINDIR)/mdlint $(DESTDIR)$(PREFIX)/bin/mdlint
+
+uninstall:
+	$(RM) $(DESTDIR)$(PREFIX)/bin/mdgen $(DESTDIR)$(PREFIX)/bin/mdlint
 
 clean:
 	$(RM) $(MDGEN_OBJ) $(MDLINT_OBJ) mdgen/mdlex.c

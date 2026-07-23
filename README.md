@@ -157,6 +157,44 @@ make distclean   # also remove bin/
 ```
 
 Requires `gcc`, GNU `make`, and `flex` (only `mdgen` needs the lexer).
+A clean build is silent — any warning is a regression.
+
+## Install
+
+```sh
+make install                       # -> $HOME/mdbuild/bin/
+make install PREFIX=/usr/local     # -> /usr/local/bin/
+make install DESTDIR=/tmp/stage    # staged, for packaging
+make uninstall                     # same PREFIX/DESTDIR as the install
+```
+
+Destination is `$(DESTDIR)$(PREFIX)/bin`. `PREFIX` defaults to
+`$HOME/mdbuild` rather than the usual `/usr/local`, because that is where this
+tool's one known consumer looks: every config Makefile in
+[`unix0cc/md`](https://github.com/unix0cc/md) hardcodes
+`MDGEN ?= $(HOME)/mdbuild/bin/mdgen`. So a bare `make install` does the useful
+thing here, and needs no root.
+
+### `install` vs `install-links`
+
+```sh
+make install-links                 # symlinks into this checkout, not copies
+```
+
+`install` copies, which is what you want for a permanent install: the
+destination is then independent of this working tree.
+
+`install-links` symlinks instead, for a machine that builds from this checkout
+and wants the installed tools to keep tracking it. That is worth having because
+a copy goes stale silently — on the development box here the installed `mdgen`
+sat four commits behind the source before anyone noticed, and nothing about a
+stale copy looks wrong from the outside. Symlinking makes that drift impossible
+rather than merely detectable.
+
+The trade: `make distclean` then breaks the links. That is the better failure —
+loud and immediate, rather than quietly building with an old compiler. Downstream
+`scripts/verify.sh` in `unix0cc/md` reports the dangling case as "cannot verify"
+(exit 2) rather than passing.
 
 ## Usage
 
