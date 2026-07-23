@@ -27,6 +27,24 @@ happen to coincide, masking missing/incomplete byte-swap logic):
   directly instead of byte-swapping it first, so every binary was rejected as
   `"Unrecognised transport version"` on a little-endian host.
 
+A second, unrelated portability defect was fixed on 2026-07-23 — this one a
+header-visibility difference rather than an endianness one:
+
+- `mdgen/{mdmain,mdparse,output_bin,output_dot}.c`: added `#include
+  <string.h>`. Sun's sources include only `<strings.h>`, the BSD/POSIX header
+  (`bcopy`, `strcasecmp`, `index`). On Solaris that also made the ISO C string
+  functions visible; under glibc it does not, so `strlen()`, `strcmp()`,
+  `memcpy()`, `memmove()`, `memset()` and `memcmp()` were all *implicitly
+  declared* — assumed to return `int`, which truncates the 64-bit return of
+  `strlen` and the pointer returns of the `mem*` family. It built and ran
+  correctly only because gcc recognises these as built-ins and uses its own
+  prototypes (hence its `incompatible implicit declaration of built-in
+  function` warnings). That is luck, not correctness: `-fno-builtin`, a
+  different compiler, or C23 — where implicit declarations were removed from
+  the language — would break it. Verified behaviour-neutral: after the fix
+  `mdgen` still reproduces Sun's 2006 binaries byte for byte, and all eleven
+  configs in `github.com/unix0cc/md` rebuild unchanged.
+
 **Endianness fix, corrected (2026-07-22):** the `hton*/ntoh*` macros in both
 `output_bin.c` and `basics.h` originally branched on `#elif defined(__linux__)`
 to decide whether to byte-swap — conflating "which OS" with "which byte
@@ -59,14 +77,23 @@ The top-level `LICENSE` file is the closest standard template match, BSD
 clause, which is preserved verbatim in every individual file's own header —
 those per-file headers are the authoritative full text.
 
-**Modified files:** three files differ from Sun's original release —
-`mdgen/output_bin.c`, `mdlint/basics.h`, and `mdlint/mdlint.c`, each fixing a
-latent little-endian portability bug (see above). `output_bin.c` and
-`mdlint.c` carry an explicit `NOTICE:` comment immediately after their
-original Sun header stating what changed; `basics.h` carries the same
-`hton*/ntoh*` fix as `output_bin.c` but predates that convention and has no
-separate NOTICE comment yet. All other files are unmodified from the
-original release.
+**Modified files:** six files differ from Sun's original release.
+
+Little-endian fixes: `mdgen/output_bin.c`, `mdlint/basics.h`, `mdlint/mdlint.c`.
+Missing `<string.h>`: `mdgen/mdmain.c`, `mdgen/mdparse.c`, `mdgen/output_dot.c`
+— and `mdgen/output_bin.c` again, which carries both.
+
+Each modified file carries an explicit `NOTICE:` comment immediately after its
+original Sun header stating what changed, except `mdlint/basics.h`, which
+predates that convention and has only the `hton*/ntoh*` fix. All other files
+are unmodified from the original release.
+
+**A note on `#pragma ident`:** Sun's files carry SCCS version stamps as
+`#pragma ident "@(#)file.c 1.1 05/03/31 SMI"`. gcc does not implement that
+pragma and `-Wall` reports it once per translation unit that sees one — 65
+warnings on a clean build, enough to bury the real ones (the missing
+`<string.h>` above sat under exactly that noise). The stamps are provenance,
+so they are kept and the Makefile passes `-Wno-unknown-pragmas` instead.
 
 ## Build (GNU make)
 

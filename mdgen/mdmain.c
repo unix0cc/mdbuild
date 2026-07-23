@@ -46,6 +46,14 @@
  * Use is subject to license terms.
  */
 
+/*
+ * NOTICE: This file has been modified from Sun's original 2006 release.
+ * Added #include <string.h>. Sun's sources include only <strings.h>, the
+ * BSD/POSIX header (bcopy, strcasecmp, index); on Solaris that also made the
+ * ISO C string functions visible, but under glibc it does not, leaving
+ * strcmp() implicitly declared. See README.md for details.
+ */
+
 #pragma ident	"@(#)mdmain.c	1.1	05/03/31 SMI"
 
 #include <stdio.h>
@@ -55,6 +63,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <strings.h>
+#include <string.h>
 
 #include <md/md_impl.h>
 

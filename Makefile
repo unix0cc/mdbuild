@@ -11,6 +11,15 @@
 CC      ?= gcc
 FLEX    ?= flex
 CFLAGS  ?= -O2 -g -Wall
+
+# Sun's sources carry SCCS version stamps as `#pragma ident "@(#)file 1.1 ..."`,
+# which gcc does not implement and -Wall reports once per translation unit that
+# sees them -- 65 warnings on a clean build, enough to bury real ones. The
+# stamps are provenance (each file's version and date at Sun) and are kept, so
+# the warning is silenced instead. Appended rather than folded into the ?= above
+# so it survives a CFLAGS supplied from the environment.
+CFLAGS  += -Wno-unknown-pragmas
+
 INCLUDE := -Iinclude
 
 BINDIR  := bin

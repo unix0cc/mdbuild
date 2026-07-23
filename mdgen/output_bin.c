@@ -57,6 +57,11 @@
  * s390x, etc.) needs the same no-op treatment as _BIG_ENDIAN, not a
  * swap -- swapping unconditionally on any Linux build silently
  * corrupted output on such hosts.
+ *
+ * Separately, added #include <string.h>: Sun's sources include only
+ * <strings.h> (BSD/POSIX: bcopy, strcasecmp, index), which on Solaris also
+ * exposed the ISO C string functions but under glibc does not, leaving
+ * strlen(), memcpy(), memset() and memcmp() implicitly declared.
  */
 
 #pragma ident	"@(#)output_bin.c	1.1	05/03/31 SMI"
@@ -68,6 +73,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <strings.h>
+#include <string.h>
 #include <inttypes.h>
 #include <netinet/in.h>
 #include <errno.h>
