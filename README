@@ -1,11 +1,15 @@
 # mdgen / mdlint (sun4v Machine Description tools) generator
 
 
-`mdgen` compiles a human-authored `.pdesc`/`.hdesc` Machine Description source file
+`mdgen` compiles a human-authored `.pdesc`/`.hdesc` Machine Description (MD) source file
 (after `cpp` preprocessing) into the binary MDESC blob a sun4v guest/hypervisor
 consumes. 
 
 `mdlint` reads/validates/dumps an already-built binary MD.
+
+The format of Machine Description is a part of FWARC/2005/115 case, available [here](https://sun4v.github.io/ARChive/FWARC/2005/115/final.materials/index.html)
+
+
 
 ## Provenance
 
@@ -15,6 +19,8 @@ to a portable GNU make + gcc build. The C source is otherwise unmodified except
 for a small set of portability fixes, warning cleanups and dead-code removals,
 none of which change output: the rebuilt `mdgen` reproduces Sun's 2006 binaries
 byte for byte.
+
+Original OpenSPARC T1 hypervisor archive available [here](http://download.oracle.com/technetwork/systems/opensparc/OpenSPARCT1_Arch.1.5.tar.bz2)
 
 **Every source change is recorded in [`CHANGELOG`](CHANGELOG)**, and each
 touched file carries a `NOTICE:` comment stating what changed, immediately after
@@ -33,27 +39,6 @@ Current divergence from Sun's original — eight of the 26 files:
 Sun's SCCS `#pragma ident` stamps are **kept** (they record each file's version
 and date at Sun); gcc does not implement that pragma, so the Makefile passes
 `-Wno-unknown-pragmas` rather than removing the stamps.
-
-## License
-
-Every one of the 26 source files in this repository (verified individually,
-byte-for-byte identical terms across all of them) carries Sun's original 2006
-license header, reproduced from `BSD+_License.txt` in the official OpenSPARC
-T1 release. That text is effectively BSD 3-Clause plus one additional clause
-("not designed, licensed or intended for use in... any nuclear facility").
-Note: this is *not* the license the broader OpenSPARC T1 release is best
-known for — the RTL/Verilog hardware model and SPARC Architecture Simulator
-(the bulk of that release by far) are GPLv2, but the hypervisor source this
-repository is drawn from (`hypervisor/src/`) is not; confirmed no file under
-`hypervisor/src/` contains any GPL text.
-
-The top-level `LICENSE` file is the closest standard template match, BSD
-3-Clause, for tooling/license-detector compatibility. It omits Sun's nuclear
-clause, which is preserved verbatim in every individual file's own header —
-those per-file headers are the authoritative full text.
-
-(The list of files that differ from Sun's original, and why, is in Provenance
-above; the full per-change history is in [`CHANGELOG`](CHANGELOG).)
 
 ## Build (GNU make)
 
@@ -126,3 +111,24 @@ based on Sun's Legion simulator source (the OpenSPARC T1 hypervisor/OBP
 firmware this repository's tools were originally built to serve). This
 project is provided "as is," without warranty of any kind, express or
 implied — see LICENSE.
+
+## License
+
+Every one of the 26 source files in this repository (verified individually,
+byte-for-byte identical terms across all of them) carries Sun's original 2006
+license header, reproduced from `BSD+_License.txt` in the official OpenSPARC
+T1 release. That text is effectively BSD 3-Clause plus one additional clause
+("not designed, licensed or intended for use in... any nuclear facility").
+Note: this is *not* the license the broader OpenSPARC T1 release is best
+known for — the RTL/Verilog hardware model and SPARC Architecture Simulator
+(the bulk of that release by far) are GPLv2, but the hypervisor source this
+repository is drawn from (`hypervisor/src/`) is not; confirmed no file under
+`hypervisor/src/` contains any GPL text.
+
+The top-level `LICENSE` file is the closest standard template match, BSD
+3-Clause, for tooling/license-detector compatibility. It omits Sun's nuclear
+clause, which is preserved verbatim in every individual file's own header —
+those per-file headers are the authoritative full text.
+
+(The list of files that differ from Sun's original, and why, is in Provenance
+above; the full per-change history is in [`CHANGELOG`](CHANGELOG).)
