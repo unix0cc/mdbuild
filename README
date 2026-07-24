@@ -1,171 +1,180 @@
-# **mdgen** / **mdlint** (sun4v Machine Description tools) generator
+mdgen / mdlint (sun4v Machine Description tools)
+================================================
 
-`mdgen` compiles a human-authored `.pdesc`/`.hdesc` Machine Description (MD) source file
-(after `cpp` preprocessing) into the binary MDESC blob a sun4v guest/hypervisor
-consumes.
+mdgen compiles a human-authored .pdesc/.hdesc Machine Description (MD) source
+file (after cpp preprocessing) into the binary MDESC blob a sun4v guest or
+hypervisor consumes.
 
-`mdlint` reads/validates/dumps an already-built binary MD.
+mdlint reads, validates and dumps an already-built binary MD.
 
 The Machine Description format is specified in Sun case FWARC/2005/115:
 https://sun4v.github.io/ARChive/FWARC/2005/115/final.materials/index.html
 
-## Build (GNU make)
 
-The original Sun Makefiles targeted Solaris/Sun Studio (`$(TOP)/Makefile.master`,
-a hardcoded `flex` path, Sun-cc-only flags) and don't run as-is elsewhere. This
-tree has a single portable top-level `Makefile` instead:
+Build (GNU make)
+----------------
+The original Sun Makefiles targeted Solaris/Sun Studio ($(TOP)/Makefile.master,
+a hardcoded flex path, Sun-cc-only flags) and don't run as-is elsewhere. This
+tree has a single portable top-level Makefile instead:
 
-```sh
-make            # -> bin/mdgen, bin/mdlint
-make clean      # remove objects + generated lexer
-make distclean   # also remove bin/
-```
+    make            # -> bin/mdgen, bin/mdlint
+    make clean      # remove objects + generated lexer
+    make distclean  # also remove bin/
 
-Requires `gcc`, GNU `make`, and `flex` (only `mdgen` needs the lexer).
-A clean build is silent — any warning is a regression.
+Requires gcc, GNU make, and flex (only mdgen needs the lexer).
+A clean build is silent -- any warning is a regression.
 
-## Install
 
-```sh
-make install                       # -> $HOME/mdbuild/bin/
-make install PREFIX=/usr/local     # -> /usr/local/bin/
-make install DESTDIR=/tmp/stage    # staged, for packaging
-make uninstall                     # same PREFIX/DESTDIR as the install
-```
+Install
+-------
+    make install                       # -> $HOME/mdbuild/bin/
+    make install PREFIX=/usr/local     # -> /usr/local/bin/
+    make install DESTDIR=/tmp/stage    # staged, for packaging
+    make uninstall                     # same PREFIX/DESTDIR as the install
 
-Destination is `$(DESTDIR)$(PREFIX)/bin`. `PREFIX` defaults to
-`$HOME/mdbuild` rather than the usual `/usr/local`, because that is where this
-tool's one known consumer looks: every config Makefile in
-[`unix0cc/md`](https://github.com/unix0cc/md) hardcodes
-`MDGEN ?= $(HOME)/mdbuild/bin/mdgen`. So a bare `make install` does the useful
-thing here, and needs no root.
+Destination is $(DESTDIR)$(PREFIX)/bin. PREFIX defaults to $HOME/mdbuild rather
+than the usual /usr/local, because that is where this tool's one known consumer
+looks: every config Makefile in github.com/unix0cc/md hardcodes
 
-### `install` vs `install-links`
+    MDGEN ?= $(HOME)/mdbuild/bin/mdgen
 
-```sh
-make install-links                 # symlinks into this checkout, not copies
-```
+So a bare make install does the useful thing here, and needs no root.
 
-`install` copies, which is what you want for a permanent install: the
-destination is then independent of this working tree.
+install vs install-links
 
-`install-links` symlinks instead, for a machine that builds from this checkout
-and wants the installed tools to keep tracking it. That is worth having because
-a copy goes stale silently — on the development box here the installed `mdgen`
-sat four commits behind the source before anyone noticed, and nothing about a
-stale copy looks wrong from the outside. Symlinking makes that drift impossible
-rather than merely detectable.
+    make install-links                 # symlinks into this checkout, not copies
 
-The trade: `make distclean` then breaks the links. That is the better failure —
+install copies, which is what you want for a permanent install: the destination
+is then independent of this working tree.
+
+install-links symlinks instead, for a machine that builds from this checkout and
+wants the installed tools to keep tracking it. That is worth having because a
+copy goes stale silently -- on the development box here the installed mdgen sat
+four commits behind the source before anyone noticed, and nothing about a stale
+copy looks wrong from the outside. Symlinking makes that drift impossible rather
+than merely detectable.
+
+The trade: make distclean then breaks the links. That is the better failure --
 loud and immediate, rather than quietly building with an old compiler. Downstream
-`scripts/verify.sh` in `unix0cc/md` reports the dangling case as "cannot verify"
+scripts/verify.sh in unix0cc/md reports the dangling case as "cannot verify"
 (exit 2) rather than passing.
 
-## Usage
 
-A config is normally **two** descriptions, compiled independently into **two**
-blobs:
+Usage
+-----
+A config is normally two descriptions, compiled independently into two blobs:
 
-- `*.pdesc` → `*-md.bin`, the **guest MD** — what the guest OS reads to learn
-  what CPUs, memory and virtual devices it has.
-- `*.hdesc` → `*-hv.bin`, the **hv-config** — what the hypervisor uses to back
-  that machine.
+    *.pdesc  ->  *-md.bin   the guest MD: what the guest OS reads to learn what
+                            CPUs, memory and virtual devices it has.
+    *.hdesc  ->  *-hv.bin   the hv-config: what the hypervisor uses to back that
+                            machine.
 
-Both are preprocessed with `cpp` first, because the sources use `#include` and
-macros. A shared `common.pdesc`/`common.hdesc` is pulled in by `#include` — it
-is never compiled on its own.
+Both are preprocessed with cpp first, because the sources use #include and
+macros. A shared common.pdesc/common.hdesc is pulled in by #include -- it is
+never compiled on its own.
 
 So a directory holding four sources builds as two separate chains:
 
-```
-1up.pdesc ────┐
-              ├── cpp ──> 1up-md.pp ── mdgen ──> 1up-md.bin    (guest MD)
-common.pdesc ─┘
+    1up.pdesc ----+
+                  +-- cpp --> 1up-md.pp -- mdgen --> 1up-md.bin   (guest MD)
+    common.pdesc -+
 
-1up.hdesc ────┐
-              ├── cpp ──> 1up-hv.pp ── mdgen ──> 1up-hv.bin    (hv-config)
-common.hdesc ─┘
-```
+    1up.hdesc ----+
+                  +-- cpp --> 1up-hv.pp -- mdgen --> 1up-hv.bin   (hv-config)
+    common.hdesc -+
 
 Run in full:
 
-```sh
-# guest MD
-cpp -traditional-cpp 1up.pdesc 1up-md.pp
-mdgen --binary --outfile 1up-md.bin 1up-md.pp
+    # guest MD
+    cpp -traditional-cpp 1up.pdesc 1up-md.pp
+    mdgen --binary --outfile 1up-md.bin 1up-md.pp
 
-# hv-config
-cpp -traditional-cpp 1up.hdesc 1up-hv.pp
-mdgen --binary --outfile 1up-hv.bin 1up-hv.pp
+    # hv-config
+    cpp -traditional-cpp 1up.hdesc 1up-hv.pp
+    mdgen --binary --outfile 1up-hv.bin 1up-hv.pp
 
-# read one back
-mdlint -t 1up-md.bin
-```
+    # read one back
+    mdlint -t 1up-md.bin
 
-Use `bin/mdgen` from a build tree, or plain `mdgen` once installed and on
-`PATH` — after `make install` the default location is `$HOME/mdbuild/bin`,
-which is not on `PATH` by default, so `$HOME/mdbuild/bin/mdgen` may be needed.
+Use bin/mdgen from a build tree, or plain mdgen once installed and on PATH --
+after make install the default location is $HOME/mdbuild/bin, which is not on
+PATH by default, so $HOME/mdbuild/bin/mdgen may be needed.
 
-The `-md`/`-hv` names are the convention the config Makefiles use (`%-md.pp:
-%.pdesc`), not something `mdgen` enforces — it just reads an input and writes
-`--outfile`. `--text` writes the same description as readable text instead of a
-blob; `--dot <arc>` emits a graph. See `mdgen --help` / `mdlint --help` for the
-full option lists.
+The -md/-hv names are the convention the config Makefiles use (%-md.pp: %.pdesc),
+not something mdgen enforces -- it just reads an input and writes --outfile.
+--text writes the same description as readable text instead of a blob;
+--dot <arc> emits a graph. See mdgen --help / mdlint --help for the full
+option lists.
 
-## Provenance
 
+Provenance
+----------
 Real 2006 Sun Microsystems C source, part of the OpenSPARC T1 hypervisor release
-(`hypervisor/src/md/{mdgen,mdlint}`), ported from Sun's Solaris/Sun-Studio build
-to a portable GNU make + gcc build. The original release is Oracle's OpenSPARC T1
+(hypervisor/src/md/{mdgen,mdlint}), ported from Sun's Solaris/Sun-Studio build to
+a portable GNU make + gcc build. The original release is Oracle's OpenSPARC T1
 hypervisor archive:
 http://download.oracle.com/technetwork/systems/opensparc/OpenSPARCT1_Arch.1.5.tar.bz2
+
 The C source is otherwise unmodified except for a small set of portability fixes,
 warning cleanups and dead-code removals, none of which change output: the rebuilt
-`mdgen` reproduces Sun's 2006 binaries byte for byte.
+mdgen reproduces Sun's 2006 binaries byte for byte.
 
-**Every source change is recorded in [`CHANGELOG`](CHANGELOG)**, and each
-touched file carries a `NOTICE:` comment stating what changed, immediately after
-its original Sun header. The exception is `mdlint/basics.h`, which predates that
-convention and carries only the little-endian `hton*/ntoh*` fix.
+Every source change is recorded in CHANGELOG, and each touched file carries a
+NOTICE: comment stating what changed, immediately after its original Sun header.
+The exception is mdlint/basics.h, which predates that convention and carries only
+the little-endian hton*/ntoh* fix.
 
-Current divergence from Sun's original — eight of the 26 files:
+Current divergence from Sun's original -- eight of the 26 files:
 
-| Kind | Files |
-|------|-------|
-| Little-endian byte-swap | `mdgen/output_bin.c`, `mdlint/basics.h`, `mdlint/mdlint.c` |
-| Missing `<string.h>` | `mdgen/mdmain.c`, `mdgen/mdparse.c`, `mdgen/output_dot.c`, `mdgen/output_bin.c` |
-| Format / init / switch | `mdgen/mdmain.c`, `mdgen/output_dot.c`, `mdlint/mdlint.c` |
-| Dead-code removal | `mdgen/mdparse.c`, `mdgen/output_text.c`, `mdgen/mdlex.l`, `mdlint/mdlint.c` |
+    Little-endian byte-swap   mdgen/output_bin.c
+                              mdlint/basics.h
+                              mdlint/mdlint.c
 
-Sun's SCCS `#pragma ident` stamps are **kept** (they record each file's version
-and date at Sun); gcc does not implement that pragma, so the Makefile passes
-`-Wno-unknown-pragmas` rather than removing the stamps.
+    Missing <string.h>        mdgen/mdmain.c
+                              mdgen/mdparse.c
+                              mdgen/output_dot.c
+                              mdgen/output_bin.c
 
-## Context
+    Format / init / switch    mdgen/mdmain.c
+                              mdgen/output_dot.c
+                              mdlint/mdlint.c
 
-Built and used as part of the qemu-sparc64 Niagara/T1000 emulation project,
-based on Sun's Legion simulator source (the OpenSPARC T1 hypervisor/OBP
-firmware this repository's tools were originally built to serve). This
-project is provided "as is," without warranty of any kind, express or
-implied — see LICENSE.
+    Dead-code removal         mdgen/mdparse.c
+                              mdgen/output_text.c
+                              mdgen/mdlex.l
+                              mdlint/mdlint.c
 
-## License
+Sun's SCCS "#pragma ident" stamps are kept (they record each file's version and
+date at Sun); gcc does not implement that pragma, so the Makefile passes
+-Wno-unknown-pragmas rather than removing the stamps.
 
+
+Context
+-------
+Built and used as part of the qemu-sparc64 Niagara/T1000 emulation project, based
+on Sun's Legion simulator source (the OpenSPARC T1 hypervisor/OBP firmware this
+repository's tools were originally built to serve). This project is provided "as
+is," without warranty of any kind, express or implied -- see LICENSE.
+
+
+License
+-------
 Every one of the 26 source files in this repository (verified individually,
 byte-for-byte identical terms across all of them) carries Sun's original 2006
-license header, reproduced from `BSD+_License.txt` in the official OpenSPARC
-T1 release. That text is effectively BSD 3-Clause plus one additional clause
-("not designed, licensed or intended for use in... any nuclear facility").
-Note: this is *not* the license the broader OpenSPARC T1 release is best
-known for — the RTL/Verilog hardware model and SPARC Architecture Simulator
-(the bulk of that release by far) are GPLv2, but the hypervisor source this
-repository is drawn from (`hypervisor/src/`) is not; confirmed no file under
-`hypervisor/src/` contains any GPL text.
+license header, reproduced from BSD+_License.txt in the official OpenSPARC T1
+release. That text is effectively BSD 3-Clause plus one additional clause ("not
+designed, licensed or intended for use in... any nuclear facility").
 
-The top-level `LICENSE` file is the closest standard template match, BSD
-3-Clause, for tooling/license-detector compatibility. It omits Sun's nuclear
-clause, which is preserved verbatim in every individual file's own header —
-those per-file headers are the authoritative full text.
+Note: this is not the license the broader OpenSPARC T1 release is best known for
+-- the RTL/Verilog hardware model and SPARC Architecture Simulator (the bulk of
+that release by far) are GPLv2, but the hypervisor source this repository is
+drawn from (hypervisor/src/) is not; confirmed no file under hypervisor/src/
+contains any GPL text.
+
+The top-level LICENSE file is the closest standard template match, BSD 3-Clause,
+for tooling/license-detector compatibility. It omits Sun's nuclear clause, which
+is preserved verbatim in every individual file's own header -- those per-file
+headers are the authoritative full text.
 
 (The list of files that differ from Sun's original, and why, is in Provenance
-above; the full per-change history is in [`CHANGELOG`](CHANGELOG).)
+above; the full per-change history is in CHANGELOG.)
