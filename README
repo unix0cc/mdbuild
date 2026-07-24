@@ -1,4 +1,4 @@
-# mdgen / mdlint (sun4v Machine Description tools) generator
+# **mdgen** / **mdlint** (sun4v Machine Description tools) generator
 
 `mdgen` compiles a human-authored `.pdesc`/`.hdesc` Machine Description (MD) source file
 (after `cpp` preprocessing) into the binary MDESC blob a sun4v guest/hypervisor
@@ -63,15 +63,54 @@ loud and immediate, rather than quietly building with an old compiler. Downstrea
 
 ## Usage
 
-```sh
-cpp -traditional-cpp input.pdesc input.pp
-bin/mdgen --binary --outfile output-md.bin input.pp
+A config is normally **two** descriptions, compiled independently into **two**
+blobs:
 
-bin/mdlint -t output-md.bin       # dump/validate a built MD as text
+- `*.pdesc` → `*-md.bin`, the **guest MD** — what the guest OS reads to learn
+  what CPUs, memory and virtual devices it has.
+- `*.hdesc` → `*-hv.bin`, the **hv-config** — what the hypervisor uses to back
+  that machine.
+
+Both are preprocessed with `cpp` first, because the sources use `#include` and
+macros. A shared `common.pdesc`/`common.hdesc` is pulled in by `#include` — it
+is never compiled on its own.
+
+So a directory holding four sources builds as two separate chains:
+
+```
+1up.pdesc ────┐
+              ├── cpp ──> 1up-md.pp ── mdgen ──> 1up-md.bin    (guest MD)
+common.pdesc ─┘
+
+1up.hdesc ────┐
+              ├── cpp ──> 1up-hv.pp ── mdgen ──> 1up-hv.bin    (hv-config)
+common.hdesc ─┘
 ```
 
-See `bin/mdgen --help` / `bin/mdlint --help` for full option lists
-(`--text`, `--dot <arc>` graph output, etc.).
+Run in full:
+
+```sh
+# guest MD
+cpp -traditional-cpp 1up.pdesc 1up-md.pp
+mdgen --binary --outfile 1up-md.bin 1up-md.pp
+
+# hv-config
+cpp -traditional-cpp 1up.hdesc 1up-hv.pp
+mdgen --binary --outfile 1up-hv.bin 1up-hv.pp
+
+# read one back
+mdlint -t 1up-md.bin
+```
+
+Use `bin/mdgen` from a build tree, or plain `mdgen` once installed and on
+`PATH` — after `make install` the default location is `$HOME/mdbuild/bin`,
+which is not on `PATH` by default, so `$HOME/mdbuild/bin/mdgen` may be needed.
+
+The `-md`/`-hv` names are the convention the config Makefiles use (`%-md.pp:
+%.pdesc`), not something `mdgen` enforces — it just reads an input and writes
+`--outfile`. `--text` writes the same description as readable text instead of a
+blob; `--dot <arc>` emits a graph. See `mdgen --help` / `mdlint --help` for the
+full option lists.
 
 ## Provenance
 
